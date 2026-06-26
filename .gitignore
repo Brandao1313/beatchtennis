@@ -1,0 +1,3 @@
+super8/data/*.json
+!super8/data/.gitkeep
+php_server.log
