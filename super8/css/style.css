@@ -301,6 +301,12 @@ table tr:nth-child(1) td {
     color: #fff;
 }
 
+#legenda-grafico {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
 @media print {
     header.topo, .no-print {
         display: none;

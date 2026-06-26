@@ -15,6 +15,44 @@ if (!$dadosParticipantes || !$rodadasData) {
 $participantes = $dadosParticipantes['participantes'];
 $classificacao = calcular_classificacao($participantes, $rodadasData);
 
+// Dados para o gráfico: pontuação acumulada por jogador após cada rodada
+$dadosGrafico = ['rodadas' => [], 'jogadores' => []];
+for ($nr = 1; $nr <= 7; $nr++) {
+    $dadosGrafico['rodadas'][] = $nr;
+}
+foreach ($participantes as $p) {
+    $total = 0;
+    $serie = [];
+    for ($nr = 1; $nr <= 7; $nr++) {
+        foreach ($rodadasData['rodadas'] as $r) {
+            if ($r['numero'] !== $nr) {
+                continue;
+            }
+            foreach ($r['partidas'] as $partida) {
+                if ($partida['placarA'] === null || $partida['placarB'] === null) {
+                    continue;
+                }
+                $pid = (int) $p['id'];
+                $emA = in_array($pid, array_map('intval', $partida['duplaA']));
+                $emB = in_array($pid, array_map('intval', $partida['duplaB']));
+                if (!$emA && !$emB) {
+                    continue;
+                }
+                $pro    = $emA ? (int) $partida['placarA'] : (int) $partida['placarB'];
+                $contra = $emA ? (int) $partida['placarB'] : (int) $partida['placarA'];
+                $total += $pro;
+                if ($pro > $contra) {
+                    $total += 2;
+                } elseif ($pro === $contra) {
+                    $total += 1;
+                }
+            }
+        }
+        $serie[] = $total;
+    }
+    $dadosGrafico['jogadores'][] = ['nome' => nome_exibicao($p), 'pontos' => $serie];
+}
+
 $mensagem = isset($_GET['msg']) ? $_GET['msg'] : null;
 
 $formato = $config['formato'] ?? 'rotativas';
@@ -160,7 +198,14 @@ if ($formato === 'fixas' && !empty($duplasFixas)) {
             <a href="../rodadas/rodadas.php" class="btn no-print">Voltar às Rodadas</a>
             <a href="../index.php" class="btn cinza no-print">Voltar ao Menu</a>
         </div>
+
+        <div class="card no-print" id="card-grafico">
+            <h2>Evolução de Pontuação por Rodada</h2>
+            <canvas id="grafico-evolucao" width="800" height="280" style="width:100%;display:block"></canvas>
+            <div id="legenda-grafico"></div>
+        </div>
     </main>
+    <script>window.dadosGrafico = <?= json_encode($dadosGrafico, JSON_UNESCAPED_UNICODE) ?>;</script>
     <script src="../js/ui.js"></script>
 </body>
 </html>
